@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>永不落幕的黃金前夕</title>
+<style>
+:root{--g:#d4af37;--g2:#fff1a8;--r:#8b0000;--bg:#07040a}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:#e9dfc4;font-family:"Noto Serif TC","Songti TC",serif;overflow:hidden}
+canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+body::before{content:"";position:fixed;inset:0;z-index:5;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.25) 0 1px,transparent 1px 3px);animation:flick 4s infinite}
+body::after{content:"";position:fixed;inset:0;z-index:4;pointer-events:none;background:radial-gradient(ellipse at center,transparent 45%,#000 100%);transition:.8s}
+body.hold::after{background:radial-gradient(circle at center,transparent 8%,#000 55%);animation:beat 1s infinite}
+body.hold #log{filter:blur(2px)}
+@keyframes beat{50%{transform:scale(1.15)}}
+@keyframes flick{0%,92%,100%{opacity:1}94%{opacity:.5}96%{opacity:.9}}
+.screen{position:fixed;inset:0;z-index:2;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+#intro{display:flex}
+#log{flex:1;overflow-y:auto;padding:64px 22px 110px;font-size:16px;line-height:2;transition:.6s}
+#log p{margin-bottom:1.1em;text-shadow:0 0 8px rgba(212,175,55,.35)}
+#log p.sys{color:var(--g2);letter-spacing:.15em;font-weight:700}
+.c{opacity:0}.c.on{opacity:1;animation:pop .3s}
+@keyframes pop{from{opacity:0;filter:blur(4px);transform:translateY(4px)}}
+#skip{position:fixed;top:calc(12px + env(safe-area-inset-top));right:14px;z-index:9;background:none;border:1px solid var(--g);color:var(--g);padding:8px 14px;font-size:13px;letter-spacing:.2em;border-radius:2px;font-family:inherit;box-shadow:0 0 10px rgba(212,175,55,.4)}
+#go{position:fixed;left:50%;bottom:calc(36px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:9;display:none;padding:14px 34px;background:linear-gradient(135deg,#5a0f1a,#2a0510);border:1px solid var(--g);color:var(--g2);font-size:16px;letter-spacing:.4em;font-family:inherit;animation:glow 2s infinite}
+@keyframes glow{50%{box-shadow:0 0 22px var(--g)}}
+.top{position:fixed;top:0;left:0;right:0;height:46px;z-index:8;background:linear-gradient(#000,transparent);display:flex;align-items:center;padding:0 14px;font-size:11px;color:var(--g);letter-spacing:.3em}
+.top i{width:7px;height:7px;border-radius:50%;background:#f33;margin-right:8px;animation:flick 1s infinite}
+/* keywords */
+.k{color:var(--g2);text-shadow:0 0 10px var(--g)}
+.red{color:#ff3b3b;animation:shake .25s infinite;display:inline-block}
+@keyframes shake{25%{transform:translate(1px,-1px)}50%{transform:translate(-1px,1px)}75%{transform:translate(1px,1px)}}
+.curse{color:#b57bff;text-shadow:0 0 8px #7a2cff,2px 0 #f0f,-2px 0 #0ff;animation:shake .4s infinite;display:inline-block}
+.old{text-decoration:line-through;text-decoration-color:var(--r);opacity:.7}
+.hb{color:#9ff;font-weight:700;display:inline-block;animation:holdt 1.4s infinite}
+@keyframes holdt{50%{transform:scale(.6);opacity:.4;letter-spacing:-.1em}}
+.fan{font-weight:900;background:linear-gradient(90deg,#8a6b12,#fff1a8,#d4af37,#8a6b12);background-size:200%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:sh 2s linear infinite;text-shadow:none;filter:drop-shadow(0 0 6px var(--g))}
+.fan.ruin{background:none;color:#555;filter:none;animation:shake .2s infinite}
+@keyframes sh{to{background-position:-200%}}
+.unk{color:#fff;letter-spacing:.2em;font-weight:900;text-shadow:2px 0 red,-2px 0 cyan}
+/* main */
+#main{display:none;opacity:0}
+#main.show{display:flex;animation:fin 1.5s forwards}
+@keyframes fin{to{opacity:1}}
+.title{text-align:center;padding:60px 16px 6px}
+.title h1{font-size:22px;letter-spacing:.35em;color:var(--g);text-shadow:0 0 14px var(--g);animation:glt 5s infinite}
+.title small{font-size:11px;color:#8a7a50;letter-spacing:.3em}
+@keyframes glt{0%,93%,100%{transform:none;text-shadow:0 0 14px var(--g)}95%{transform:translateX(-3px);text-shadow:3px 0 red,-3px 0 cyan}97%{transform:translateX(3px)}}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px}
+.tab{padding:12px 4px;background:rgba(40,10,20,.7);border:1px solid #6b5a22;color:#b9a56a;font-family:inherit;font-size:14px;letter-spacing:.15em;position:relative;transition:.3s}
+.tab.act{color:#fff1a8;border-color:var(--g);background:linear-gradient(135deg,#4a0b16,#1b0409);box-shadow:0 0 16px rgba(212,175,55,.5),inset 0 0 12px rgba(139,0,0,.6)}
+.card{flex:1;margin:0 16px 20px;border:1px solid var(--g);padding:22px 18px;position:relative;overflow-y:auto;background:rgba(15,5,12,.8);box-shadow:inset 0 0 40px rgba(139,0,0,.35)}
+.card::before,.card::after{content:"❖";position:absolute;color:var(--g);font-size:14px}
+.card::before{top:4px;left:6px}.card::after{bottom:4px;right:6px}
+.card h2{font-size:26px;color:var(--g2);letter-spacing:.2em;text-align:center;margin-bottom:6px;position:relative}
+.card h2.gl{animation:glt 3s infinite}
+.card .sub{text-align:center;font-size:12px;color:#8a7a50;letter-spacing:.3em;margin-bottom:22px}
+.row{display:flex;justify-content:space-between;border-bottom:1px dashed #5a4a1c;padding:11px 0;font-size:14px}
+.row b{color:var(--g);font-weight:400}
+.row span{color:#cfc;animation:flick 2s infinite}
+.warn{margin-top:20px;font-size:12px;color:#ff6b6b;text-align:center;letter-spacing:.15em;animation:flick 3s infinite}
+/* 規則須知 */
+.tab.rule{grid-column:1/-1;border-color:var(--r);color:#ff9a9a;background:linear-gradient(135deg,#3a0610,#12030a);animation:glow 2.5s infinite}
+.tab.rule::before{content:"⚠ "}
+#rules{position:fixed;inset:0;z-index:20;display:none;flex-direction:column;background:rgba(5,2,8,.96);padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+#rules.show{display:flex;animation:fin .5s forwards}
+.rhead{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid var(--g);color:var(--g2);letter-spacing:.3em;font-size:16px;text-shadow:0 0 10px var(--g)}
+.rhead button{background:none;border:1px solid var(--g);color:var(--g);padding:6px 14px;font-family:inherit;font-size:13px;letter-spacing:.2em}
+.rbody{flex:1;overflow-y:auto;padding:20px 20px 40px;font-size:14px;line-height:1.9}
+.rbody .intro{color:#ff6b6b;text-align:center;margin-bottom:20px;letter-spacing:.1em;animation:flick 3s infinite}
+.rbody h3{color:var(--g2);font-size:16px;letter-spacing:.2em;margin:22px 0 8px;padding-left:10px;border-left:3px solid var(--r)}
+.rbody ol{padding-left:22px;color:#d8cba6}
+.rbody li{margin-bottom:8px}
+/* Jaz 檔案 */
+.balls{display:flex;justify-content:center;gap:34px;margin:4px 0 18px}
+.bal{width:52px;height:64px;border-radius:50% 50% 48% 48%;position:relative;animation:fl 3s ease-in-out infinite;box-shadow:inset -6px -8px 12px rgba(0,0,0,.35)}
+.bal::after{content:"";position:absolute;left:50%;top:100%;width:1px;height:34px;background:#8a7a50}
+.bal.r{background:radial-gradient(circle at 35% 30%,#ff8a8a,#b01020)}
+.bal.b{background:radial-gradient(circle at 35% 30%,#8ab0ff,#1a2f9a);animation-delay:-1.5s}
+.bal i{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-style:normal;color:#ffe066;font-size:15px}
+@keyframes fl{50%{transform:translateY(-10px) rotate(3deg)}}
+.file-no{text-align:center;font-size:12px;color:#ff6b6b;letter-spacing:.2em;margin-bottom:14px;animation:flick 2s infinite}
+.alert{border:1px solid var(--r);background:rgba(90,0,10,.25);color:#ff9a9a;font-size:12px;line-height:1.8;padding:10px 12px;margin-bottom:16px;letter-spacing:.05em}
+.sec{color:var(--g2);font-size:14px;letter-spacing:.25em;margin:22px 0 8px;padding-left:10px;border-left:3px solid var(--r)}
+.txt{font-size:14px;line-height:1.9;color:#d8cba6}
+.sysnote{font-size:14px;line-height:1.9;color:#bfe;border-left:1px dashed #5fd;padding-left:10px;margin:8px 0}
+.gx{color:#c9a7ff;text-shadow:1px 0 #f0f,-1px 0 #0ff;display:inline-block;min-width:1em}
+.bk{background:#000;color:#ff3b3b;padding:0 3px;border:1px solid #400;letter-spacing:.1em;display:inline-block}
+.lie{color:#fff1a8;font-style:italic;text-align:center;margin:12px 0;animation:shake .5s infinite}
+.gone{animation:vanish 3s infinite}
+@keyframes vanish{0%,60%,100%{opacity:1}70%,85%{opacity:0;letter-spacing:.5em}}
+.row span.dang{color:#ff6b6b}
+/* Sandalphon 檔案 */
+.rose{position:fixed;bottom:-40px;z-index:3;pointer-events:none;animation:rise linear forwards;filter:drop-shadow(0 0 6px #c00)}
+@keyframes rise{0%{opacity:0}15%{opacity:1}100%{transform:translateY(-110vh) rotate(360deg);opacity:0}}
+.tat{color:#ff2a4a;text-shadow:0 0 8px #f00;display:inline-block;animation:pulse 1.6s infinite}
+@keyframes pulse{50%{text-shadow:0 0 18px #f00;transform:scale(1.08)}}
+.smoke{display:inline-block;color:#aaa;animation:smk 3s infinite}
+@keyframes smk{50%{filter:blur(3px);opacity:.45;transform:translateY(-2px)}}
+.smokebar{height:34px;margin:8px 0;background:radial-gradient(ellipse at 50% 100%,rgba(170,170,170,.55),transparent 70%);filter:blur(6px);animation:smk 4s infinite}
+.zz{display:inline-block;animation:zz 3s infinite}
+@keyframes zz{0%,40%,100%{opacity:1}55%{opacity:.1;filter:blur(2px)}70%{opacity:.6}}
+.nt{list-style:none;padding:0}
+.nt li{font-size:14px;line-height:1.9;color:#d8cba6;padding:6px 0 6px 22px;position:relative;border-bottom:1px dashed #3a2f12}
+.nt li::before{content:"♪";position:absolute;left:2px;color:var(--g);animation:flick 2s infinite}
+.mute{color:#ff6b6b;animation:shake .3s infinite;display:inline-block}
+/* Algar 檔案 */
+.flash{position:fixed;inset:0;z-index:30;background:#fff;pointer-events:none;animation:fl2 .5s forwards}
+@keyframes fl2{0%{opacity:.85}100%{opacity:0}}
+.alg{--r2:#c4243f}
+.alg-whip{position:relative;height:56px;margin:6px 0 14px;border-bottom:2px solid #5b4a2a;cursor:pointer;overflow:hidden}
+.alg-whip::before{content:"";position:absolute;left:0;bottom:8px;height:3px;width:100%;background:linear-gradient(90deg,transparent,var(--g),#fff);transform-origin:left;transform:scaleX(0)}
+.alg-whip span{position:absolute;right:6px;top:4px;font-size:12px;color:#8a7a50;letter-spacing:.15em}
+.alg-whip b{position:absolute;left:50%;top:4px;font-size:26px;color:#ff3b3b;opacity:0;transform:translateX(-50%) scale(.4)}
+.alg-whip.crack::before{animation:algw .45s ease-out}
+.alg-whip.crack b{animation:algb .6s ease-out}
+.alg-whip.crack{animation:algsh .3s}
+@keyframes algw{0%{transform:scaleX(0);opacity:1}60%{transform:scaleX(1);opacity:1}100%{transform:scaleX(1);opacity:0}}
+@keyframes algb{0%{opacity:0;transform:translateX(-50%) scale(.4)}30%{opacity:1;transform:translateX(-50%) scale(1.3)}100%{opacity:0;transform:translateX(-50%) scale(1)}}
+@keyframes algsh{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.alg-quote{border-left:3px solid var(--g);padding:8px 12px;margin:12px 0;background:rgba(212,175,55,.08);font-style:italic;color:var(--g2)}
+.alg-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.alg-c{border:1px solid #4a3f2a;padding:8px 10px;background:rgba(0,0,0,.3);font-size:14px}
+.alg-c small{display:block;color:#8a7a50;font-size:11px;letter-spacing:.1em}
+.alg-c.w{grid-column:1/3}
+.alg-c.horn{border-color:#c4243f;cursor:pointer;animation:algp 2s infinite}
+@keyframes algp{50%{box-shadow:0 0 12px rgba(196,36,63,.7)}}
+.alg-c.horn em{display:none;margin-top:6px;color:#ff6b6b;font-style:normal;font-weight:700}
+.alg-c.horn.on{animation:algsh .3s}
+.alg-c.horn.on em{display:block}
+.alg-voice{border:1px solid #4a3f2a;padding:12px;background:rgba(0,0,0,.35);font-size:14px;line-height:1.9;color:#d8cba6}
+.alg-tags span{display:inline-block;border:1px solid var(--g);color:var(--g);padding:1px 12px;margin:0 6px 6px 0;font-size:13px;letter-spacing:.15em}
+.alg-b{margin:8px 0;padding:10px 12px;background:#241a2c;border-radius:4px 14px 14px 14px;font-size:14px;line-height:1.9;color:#d8cba6;opacity:0;animation:algin .6s forwards}
+.alg-b.d1{animation-delay:.4s}.alg-b.d2{animation-delay:1s}.alg-b.d3{animation-delay:1.6s}
+.alg-b i{display:block;font-style:normal;color:#8a7a50;font-size:11px;letter-spacing:.2em}
+@keyframes algin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.alg-warn{margin-top:20px;padding:12px;border:2px solid var(--r);color:#ffb4bf;font-size:13px;line-height:1.8;background:repeating-linear-gradient(-45deg,rgba(139,0,0,.3) 0 10px,transparent 10px 20px);background-size:200% 100%;animation:algst 3s linear infinite}
+@keyframes algst{to{background-position:28px 0}}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+
+<div class="screen" id="intro">
+  <div class="top"><i></i>SYSTEM // LINK</div>
+  <button id="skip">跳過序章 ▸▸</button>
+  <div id="log"></div>
+  <button id="go">踏入帳篷</button>
+</div>
+
+<div class="screen" id="main">
+  <div class="title"><h1>永不落幕的黃金前夕</h1><small>— 御前演出・永不開場 —</small></div>
+  <div class="tabs" id="tabs"></div>
+  <div class="card" id="card"></div>
+  <div id="rules">
+  <div class="rhead"><span>規則須知</span><button onclick="document.getElementById('rules').classList.remove('show')">關閉 ✕</button></div>
+  <div class="rbody">
+    <div class="intro">互動前請先閱讀。追蹤、留言、參與互動即視為已讀並同意以下規則。</div>
+
+    <h3>一、基本互動</h3>
+    <ol>
+      <li>請保持基本禮貌與尊重，勿人身攻擊、歧視、騷擾、情勒、洗版或惡意引戰。</li>
+      <li>角色與中之分離。角色發言為角色扮演，不代表中之個人立場。</li>
+      <li>請尊重其他互動者，勿擅自替他人角色做決定、強行推進劇情或強制拉 CP。</li>
+      <li>若對劇情、設定有疑問，請以本團公告為準；未公告部分請勿自行補完並當成事實。</li>
+    </ol>
+
+    <h3>二、私訊規則</h3>
+    <ol>
+      <li>本團暫不開放私訊。除非特殊活動，或親密度足夠時，角色會主動私訊你。</li>
+      <li>請勿主動私訊角色帳或中之帳，亦勿要求交換個資、語音、視訊、見面或金錢往來。</li>
+      <li>若角色主動私訊，也請保持尊重與界線；若感到不適，可停止回應並告知管理。</li>
+    </ol>
+
+    <h3>三、中之身份與隱私</h3>
+    <ol>
+      <li>請勿肆意揣測、挖掘、比對、公開或討論中之現實身份、帳號、社交圈、所在地等。</li>
+      <li>請勿將角色言行上升至中之，亦勿因劇情遷怒中之。</li>
+      <li>未經同意，請勿截圖、錄音、轉傳私訊或互動內容。</li>
+    </ol>
+
+    <h3>四、角色設定與劇情</h3>
+    <ol>
+      <li>本團角色設定並不完整，可能隨劇情逐步補全、調整或修正。</li>
+      <li>請不要肆意揣測劇情走向，或將個人腦補當作官方設定，影響其他人的互動體驗。</li>
+      <li>禁止強制官方或其他角色接受你的設定、配對、關係或劇情。</li>
+      <li>若設定有衝突，以管理／官方最後公告為準。</li>
+    </ol>
+
+    <h3>五、創作與交流</h3>
+    <ol>
+      <li>尊重著作權與創作心血，勿抄襲、搬運、盜用角色設定、圖文或對話。</li>
+      <li>轉載、二創、引用請先取得同意並標明出處。</li>
+    </ol>
+
+    <h3>六、活動與公告</h3>
+    <ol>
+      <li>特殊活動、私訊開放、親密度條件等，以本團公告為準。</li>
+      <li>管理保留調整規則、活動內容與最終解釋權。</li>
+      <li>違規者可能被提醒、警告、限制互動、封鎖，恕不另行通知。</li>
+    </ol>
+  </div>
+</div>
+</div>
+
+<script>
+const L=[
+['sys','叮——<span class="k">系統載入中</span>。'],
+['sys','檢測到罕見的純血<span class="k">人類</span>生命體徵。<br>神經鏈接已建立。'],
+['','歡迎來到<span class="red">S級高危畸變廢土</span>場景——<span class="k">【永不落幕的黃金前夕】</span>。'],
+['','親愛的玩家，請先深呼吸（<span class="hb">閉氣</span>）。對，不要去聞空氣裡的刺鼻氣味，假裝你聞到的是焦糖爆米花和玫瑰香氛。因為在你正前方的那個巨大、破敗的馬戲團帳篷裡，好戲馬上就要開場了。','hold'],
+['','在進入副本前，作為你忠誠的系統，我得先給你交代背景。'],
+['','你知道這片長滿了輻射真菌、到處都是扭曲異種的廢土，以前叫什麼嗎？叫「<span class="k">奧雷利亞晶能帝國</span>」。但那已經是<span class="old">兩百年</span>前的歷史了。一場<span class="red">魔能淵海</span>的超載倒灌，把這個全大陸最<span class="fan">繁華</span>的國家在一夜之間燒成了渣滓。'],
+['','但諷刺的是，這片死寂大地上，唯獨這個前宮廷馬戲團活（真的是活嗎？）了下來，而且……光鮮亮麗。'],
+['','這就不得不提當年那位性格惡劣的帝國<span class="red">國師</span>了。這群倒楣的藝術家不知道怎麼得罪了他，國師在帝國覆滅的前夕，對他們降下了一個<span class="curse">詛咒</span>——「<span class="unk" data-s="無知者">無知者</span>」。'],
+['','在馬戲團成員的眼中，時間永遠停留在「<span class="k">國王五十歲壽宴的前一天</span>」。'],
+['','在他們眼裡，外頭流著綠色酸液、多長了三顆腦袋的變異怪物，是擠在街道上歡呼的熱情平民；被風化成白骨和瓦礫的廢墟，是掛滿彩旗的華麗城鎮；而你，親愛的玩家，在他們眼中，是遠道而來、穿著華服的<span class="k">貴族觀眾</span>。'],
+['','他們被困在一個名為「<span class="fan">繁華</span>」的幻夢裡，日復一日地排練著永遠不會到來的御前演出。'],
+['sys','只要他們不醒來，廢土的輻射與歲月就無法在他們身上留下痕跡。']
+];
+const log=document.getElementById('log'),go=document.getElementById('go');
+let idx=0,done=false,timers=[];
+function wrap(n){[...n.childNodes].forEach(c=>{if(c.nodeType==3){const f=document.createDocumentFragment();[...c.textContent].forEach(ch=>{const s=document.createElement('span');s.className='c';s.textContent=ch;f.appendChild(s)});c.replaceWith(f)}else wrap(c)})}
+function next(){
+  if(done)return;
+  if(idx>=L.length){go.style.display='block';return}
+  const [cls,html,fx]=L[idx++];
+  const p=document.createElement('p');p.className=cls;p.innerHTML=html;wrap(p);log.appendChild(p);
+  if(fx=='hold'){document.body.classList.add('hold');setTimeout(()=>document.body.classList.remove('hold'),4500)}
+  const cs=p.querySelectorAll('.c');let i=0;
+  const t=setInterval(()=>{if(done){clearInterval(t);return}
+    cs[i]&&cs[i].classList.add('on');i++;log.scrollTop=log.scrollHeight;
+    if(i>=cs.length){clearInterval(t);setTimeout(next,fx=='hold'?2500:700)}},45);
+  timers.push(t);
+}
+function finish(){done=true;timers.forEach(clearInterval);document.body.classList.remove('hold');
+  log.innerHTML='';L.forEach(([c,h])=>{const p=document.createElement('p');p.className=c;p.innerHTML=h;log.appendChild(p)});
+  go.style.display='block';document.getElementById('skip').style.display='none'}
+document.getElementById('skip').onclick=()=>{enter()};
+go.onclick=enter;
+function enter(){done=true;timers.forEach(clearInterval);document.body.classList.remove('hold');
+  const i=document.getElementById('intro');i.style.transition='1s';i.style.opacity=0;i.style.filter='blur(10px)';
+  setTimeout(()=>{i.style.display='none';document.getElementById('main').classList.add('show')},900)}
+// 繁華 <-> 廢墟 flicker
+setInterval(()=>{document.querySelectorAll('.fan').forEach(e=>{if(Math.random()<.35&&!e.dataset.f){e.dataset.f=1;const o=e.textContent;e.textContent='廢墟';e.classList.add('ruin');setTimeout(()=>{e.textContent=o;e.classList.remove('ruin');delete e.dataset.f},350)}})},1600);
+// 無知者 scramble
+const junk='▓░▒█？！◆※¿';
+setInterval(()=>{document.querySelectorAll('.unk').forEach(e=>{if(Math.random()<.4){e.textContent=[...e.dataset.s].map(()=>junk[Math.floor(Math.random()*junk.length)]).join('');setTimeout(()=>e.textContent=e.dataset.s,200)}})},1300);
+// characters
+const names=['Jaz','Algar','Sandalphon','Rospia'];
+const tabs=document.getElementById('tabs'),card=document.getElementById('card');
+names.forEach((n,i)=>{const b=document.createElement('button');b.className='tab';b.textContent='【'+n+'】';b.onclick=()=>show(i);tabs.appendChild(b)});
+function show(i){
+  [...tabs.children].forEach((b,j)=>b.classList.toggle('act',i==j));
+  card.style.animation='none';card.offsetHeight;card.style.animation='fin 0.6s';
+  card.innerHTML=`<h2 class="gl">${names[i]}</h2><div class="sub">— 御前演出者 No.0${i+1} —</div>
+  <div class="row"><b>身分</b><span>待增</span></div>
+  <div class="row"><b>種族</b><span>待增</span></div>
+  <div class="row"><b>演出項目</b><span>待增</span></div>
+  <div class="row"><b>性格</b><span>待增</span></div>
+  <div class="row"><b>危險等級</b><span>待增</span></div>
+  <div class="row"><b>背景</b><span>待增</span></div>
+  <div class="warn">⚠ 規則：請勿向其告知「明天」不會到來。</div>`}
+show(0);
+// ===== Jaz 檔案 =====
+const JAZ=`
+<h2 class="gl">Jaz</h2>
+<div class="sub">— 御前演出者 No.01 —</div>
+<div class="file-no">🎭 檔案編號：<span class="gx" data-s="???">???</span></div>
+<div class="alert">⚠ 警告：檢測到嚴重精神污染源。部分數據模塊已自動鎖死或損壞，顯示為亂碼。</div>
+
+<div class="balls">
+  <div class="bal r"><i>◕‿◕</i></div>
+  <div class="bal b"><i>★</i></div>
+</div>
+
+<div class="row"><b>姓名</b><span>Jaz</span></div>
+<div class="row"><b>身份</b><span>宮廷馬戲團<span class="gx" data-s="團長">團長</span></span></div>
+<div class="row"><b>危險等級</b><span class="dang"><span class="gx" data-s="？？？？">？？？？</span></span></div>
+<div class="txt" style="margin:8px 0;font-size:12px;color:#ff9a9a">系統無法演算上限，請玩家自求多福。</div>
+
+<div class="sec">外觀掃描</div>
+<div class="txt">穿著俐落的灰色格紋西裝與白襯衫，繫著帶有紅色波點的灰色領巾，酒紅色的頭髮在腦後紮成一條小辮子。臉上永遠戴著一張華麗的<span class="k">紅、藍、金</span>三色半臉面具，手裡總是舉著氣球。</div>
+
+<div class="sec">系統語音</div>
+<div class="sysnote">看到那個笑得一臉燦爛、打扮得像個花俏小丑的傢伙了嗎？對，他就是這裡的主人，Jaz。<br>親愛的玩家，作為你盡職的系統，我必須給你兩條忠告。</div>
+
+<div class="sec">一・他的嘴</div>
+<div class="txt">他語言與真實絕緣。只要他沒有摘下臉上那張面具，他對你說的每一句話、每一個字，<span class="red">都是在撒謊</span>。（這似乎與他的背景有關）</div>
+
+<div class="sec">忠告二・他的氣球</div>
+<div class="txt">看見他手裡拿著的那兩個氣球了嗎？一個畫著笑臉的<span style="color:#ff6b6b">紅色氣球</span>，和一個印著黃色星星的<span style="color:#7aa8ff">藍色氣球</span>。<br>這是一個二選一的互動機制。當他走向你並遞出氣球時，你必須拿對顏色。</div>
+<div class="sysnote">根據我剛搶救回來的破損日誌記載：<br>「如果他拿著【<span class="bk">■■</span>】色氣球（滋滋……數據損壞），你可以微笑著接受他的善意；但如果他拿著的是【<span class="bk">■■</span>】色氣球，無論他用多麼誘惑的條件跟你交換，<span class="red">不可以接過來</span>！」</div>
+<div class="txt">抱歉，具體的安全顏色代碼已經被某種力量啃噬了。不過系統提示你：<span class="k">注意看他的面具</span>。那張面具的左右配色，或許藏著保命的線索。</div>
+
+<div class="sec">背景資料補丁：<span class="gx" data-s="一段不被承認的歷史">一段不被承認的歷史</span></div>
+<div class="txt">關於這位團長，後台還有一段殘缺的故事。<br><br>
+事實上，在<span class="unk" data-s="無知者">無知者</span>降臨、馬戲團剛開始這場無盡巡演的時候，這裡的團長……並不是Jaz。<br><br>
+據說曾經有一位備受敬重的<span class="gone">老團長</span>。但在某個雷雨交加的深夜，有人聽到團長的帳篷裡傳出Jaz與他激烈的爭執聲，隨後是……<span class="bk">數據缺失</span><br><br>
+第二天早晨，團長就這麼憑空消失了。<br>
+而Jaz換上了現在這身筆挺的西裝，依然戴著他的面具，站在原本屬於團長的指揮台上，笑瞇瞇地對著驚疑不定的團員們歪了歪頭：</div>
+<div class="lie">「大家在找誰？前任團長？……真奇怪，你們是不是排練太累出現幻覺了？」</div>
+<div class="lie">「這座宮廷馬戲團的團長，明明【<span class="lie">一直以來都是我</span>】啊。」</div>
+
+<div class="warn">⚠ 規則：面具未摘下之前，請勿相信他說的任何一句話。</div>
+`;
+
+const SAND=`
+<h2 class="gl">Sandalphon</h2>
+<div class="sub">— 御前演出者 No.03 —</div>
+<div class="file-no">♪ <span class="tat">♪</span> ♫ 琴聲已就位 ♫ <span class="tat">♪</span> ♪</div>
+
+<div class="row"><b>姓名</b><span>Sandalphon</span></div>
+<div class="row"><b>性別</b><span>男</span></div>
+<div class="row"><b>危險等級</b><span>未知</span></div>
+
+<div class="sec">整體概論</div>
+<div class="txt">說話不當人，嘲諷值不滿但很欠揍，目前為止沒有具體性統計戰力排行，已知手不能提肩不能扛（自稱）。尚算正直，但也絕對不是什麼好東西。自知之明頗多，不去參與或過問別人權職範圍內的事務。肝力耐力頗高，具備<span class="k">藝術天賦</span>且在<span class="k">音樂</span>上尤其突出。完全信奉且將命令執行到底，但其中會否因興致使然而做什麼事便不得而知。</div>
+
+<div class="sec">性格</div>
+<div class="txt">信奉則全然托付，並不顧是否傷及自身。對於命令說一不二，不時含帶私心。惰性尚有，但必要時刻並不會因此而拖累。待人還算真誠。</div>
+
+<div class="sec">外貌</div>
+<div class="txt">金短卷髮蓬鬆且凌亂，額前劉海遮去大部分眉毛。五官深邃精緻，膚色白皙乾淨，身上攀著無數<span class="tat">艷紅色花朵</span>的立體紋身。虹膜為藍灰色，眼型下垂。微笑唇。整體看似無辜柔弱。身形高大，尚算壯碩，自腰腹以下衣裳雖有支撐但掀開只會看到<span class="smoke">濃煙滾滾</span>，並沒有任何的身體部位。</div>
+<div class="smokebar"></div>
+
+<div class="sec">衣著</div>
+<div class="txt">上身著白色蕾絲深V領襯衫，從第三顆扣子以下扣得凌亂，燈籠長袖，手腕處收緊綻放一圈蓬鬆緞帶垂落，接近腰部的地方被<span class="smoke">濃煙</span>熏成漸變。能看得出來下身是外套+褲子，且外套的長度、寬度都像一條破碎的裙裝。在後腰地方有一紮得鬆垮的<span class="k">明黃色蝴蝶結</span>。</div>
+
+<div class="sec">備註</div>
+<ul class="nt">
+<li>戰力成謎但不出席任何戰爭。</li>
+<li>樂於將瑣碎事攪和成一團亂後看熱鬧。（似乎挺樂意當攪屎棍，事後坦然待之或事前已經通知過，但沒人當回事）</li>
+<li>某程度上頗能得寸進尺。</li>
+<li>一旦高強度創作後必定<span class="zz">昏迷不醒</span>。</li>
+<li>做事算不上急但也肯定不快，看委託對象而論工作時長。</li>
+<li><span class="mute">特定時間</span>拒收消息，誰來也不好使。</li>
+<li>大概因為同事愛，所以沒死吧。</li>
+<li>出現的時候會伴隨著突然浮現的<span class="tat">薔薇</span>跟音樂聲。</li>
+<li>紋身是立體的，是活的，似乎跟主人五感連結，還能被自如操控？</li>
+</ul>
+
+<div class="warn">⚠ 規則：他消失的時候，請不要去撿地上的花瓣。</div>
+`;
+const ALGAR=`
+<h2 class="gl">Algar</h2>
+<div class="sub">— 御前演出者 No.02 —</div>
+<div class="sysnote">叮——系統正在為您重新編譯數據。<br>視覺排版已更新，請玩家仔細閱讀以下……哦，角色面板。</div>
+<div class="file-no">🎪 檔案編號：<span class="gx" data-s="???">???</span></div>
+
+<div class="row"><b>姓名</b><span>阿爾加爾 Algar</span></div>
+<div class="row"><b>身份</b><span>首席馴獸師</span></div>
+
+<div class="alg alg-whip" onclick="var e=this;e.classList.remove('crack');void e.offsetWidth;e.classList.add('crack');crackFlash()">
+  <span>（點一下，聽鞭聲）</span><b>啪！</b>
+</div>
+
+<div class="alg-quote">「善者非善，惡者非惡，論孰是孰非？這一場獸遊由我主導，人稱——阿爾加爾。」</div>
+
+<div class="sec">基礎觀測數據</div>
+<div class="alg-grid">
+  <div class="alg-c"><small>性別與年齡</small>男 ｜ 27歲</div>
+  <div class="alg-c"><small>破殼日與體型</small>11月14日<br>176cm / 61kg</div>
+  <div class="alg-c w"><small>專屬信物</small>遮掩真容的面具</div>
+  <div class="alg-c w horn" onclick="this.classList.toggle('on')"><small>危險特徵（點擊觀察）</small>天生異角<br><span style="color:#ff9a9a;font-size:12px">系統警告：歡迎觀賞，但絕對禁止觸摸</span><em>⚠ 偵測到觸碰意圖，已記錄在案。</em></div>
+  <div class="alg-c"><small>偏好傾向</small>獸類、純肉食</div>
+  <div class="alg-c"><small>厭惡事物</small><span class="gx" data-s="有待商榷">有待商榷</span></div>
+  <div class="alg-c w" style="color:#ff9a9a;font-size:12px;line-height:1.8">※ 系統顯示為「有待商榷」——這意味著他的雷區是動態的，隨時可能因為你的某個舉動而爆發，請謹慎試探。</div>
+</div>
+
+<div class="sec">語音攔截</div>
+<div class="alg-voice">「如你所見，我是個馴獸師。不要害怕我的鞭子，它只會朝<span class="red">壞孩子</span>去。你問我的角？天生的，歡迎你看看，但是<span class="red">禁止觸摸</span>哦。<br><br>另外，我的脾氣可沒有現在看著好，噢……現在的好語氣是團長要求的。畢竟你可是觀眾，擅自發怒的話，團長也會不高興的。」</div>
+
+<div class="sec">觀測報告</div>
+<div class="alg-tags"><span>自信</span><span>偏執</span><span>恆心</span></div>
+<div class="alg-b d1"><i>觀測記錄 01</i>「多麼勇敢的馴獸師！即便猛獸在前也游刃有餘。」</div>
+<div class="alg-b d2"><i>觀測記錄 02</i>「他好美……就如同他的名字。我看不清他面具下的表情，但想來絕對不會差吧？」</div>
+<div class="alg-b d3"><i>觀測記錄 03</i>「鞭子抽打在地面的破空聲在心裡震動，我的心高高懸起又狠狠落下——太刺激了！阿爾加爾的表演絕對是我的最愛！」</div>
+
+<div class="alg-warn"><b>【系統提示】</b><br>玩家請注意，無論他在舞台上多麼優雅迷人，永遠別忘記他對<span class="red">肉食</span>的偏好。在狂熱的掌聲中保持清醒，千萬別讓自己成為他鞭子底下那些不聽話的壞孩子。</div>
+`;
+
+function crackFlash(){
+  const f=document.createElement('div');f.className='flash';
+  document.body.appendChild(f);setTimeout(()=>f.remove(),600);
+}
+
+function roseBurst(){
+  const sym=['🌹','🥀','♪','♫','❀'];
+  for(let n=0;n<16;n++){
+    const e=document.createElement('span');
+    e.className='rose';
+    e.textContent=sym[Math.floor(Math.random()*sym.length)];
+    e.style.left=Math.random()*95+'vw';
+    e.style.fontSize=(16+Math.random()*18)+'px';
+    e.style.animationDuration=(3+Math.random()*3)+'s';
+    e.style.animationDelay=(Math.random()*1.2)+'s';
+    document.body.appendChild(e);
+    setTimeout(()=>e.remove(),7000);
+  }
+}
+
+const _showOld=show;
+show=function(i){
+  _showOld(i);
+  if(i===0) card.innerHTML=JAZ;
+  if(i===1){card.innerHTML=ALGAR;crackFlash();}
+  if(i===2){card.innerHTML=SAND;roseBurst();}
+};
+show(0);
+
+// 亂碼 / 塗黑特效
+const JK='▓░▒█？！◆※¿■';
+setInterval(()=>{
+  document.querySelectorAll('.gx').forEach(e=>{
+    const s=e.dataset.s;
+    e.textContent=Math.random()<.55
+      ?[...s].map(c=>Math.random()<.55?JK[Math.floor(Math.random()*JK.length)]:c).join('')
+      :s;
+  });
+  document.querySelectorAll('.bk').forEach(e=>{
+    if(!e.dataset.o)e.dataset.o=e.textContent;
+    e.textContent=Math.random()<.25
+      ?[...e.dataset.o].map(()=>JK[Math.floor(Math.random()*JK.length)]).join('')
+      :e.dataset.o;
+  });
+},220);
+const rb=document.createElement('button');
+rb.className='tab rule';rb.textContent='規則須知';
+rb.onclick=()=>document.getElementById('rules').classList.add('show');
+
+tabs.appendChild(rb);
+// gold dust
+const cv=document.getElementById('cv'),x=cv.getContext('2d');let W,H;
+function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight}rs();onresize=rs;
+const P=Array.from({length:55},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*2+.5,v:Math.random()*.6+.2,a:Math.random()}));
+(function d(){x.clearRect(0,0,W,H);P.forEach(p=>{p.y-=p.v;p.x+=Math.sin(p.y/30)*.3;p.a+=.03;if(p.y<-5){p.y=H+5;p.x=Math.random()*W}
+x.globalAlpha=.3+.5*Math.abs(Math.sin(p.a));x.fillStyle=Math.random()<.002?'#f33':'#d4af37';x.beginPath();x.arc(p.x,p.y,p.r,0,7);x.fill()});requestAnimationFrame(d)})();
+setTimeout(next,600);
+</script>
+</body>
+</html>
